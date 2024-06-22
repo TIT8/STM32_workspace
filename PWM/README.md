@@ -8,6 +8,4 @@
 
 It simulates the use of a potentiometer on analog pin, whose output can be mapped in a variable that change the duty cycle via the CCR register of the timer.
 
-&nbsp;
-
 Without the oscilloscope, you can use a LED to observe the dimming effect in action.
