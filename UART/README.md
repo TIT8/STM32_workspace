@@ -1,0 +1,1 @@
+### Send 7 characters via your serial terminal (I use Putty, but you can use also another microcontroller) and if inside them there is "toggle", the default green led of the Nucleo Board will toggle ON/OFF. You will receive "ok\n" after that 7 characters.
