@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +41,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
+DMA_HandleTypeDef hdma_tim1_ch1;
 
 UART_HandleTypeDef huart2;
 
@@ -51,6 +52,7 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
@@ -59,7 +61,10 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+volatile bool sent = false;
+volatile bool control = false;
+uint16_t CCR1_1[] = {25};
+uint16_t CCR1_2[] = {50};
 /* USER CODE END 0 */
 
 /**
@@ -91,11 +96,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+
+  /* If you don't use DMA to update the CCR of the timer
   TIM1->CCR1 = 60;
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  */
+
+  HAL_TIM_PWM_Start_DMA(&htim1, TIM_CHANNEL_1, (const uint32_t*)CCR1_1, 1);
+  control = true;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -264,6 +276,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -296,12 +324,37 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
+{
+	sent = !sent;
+	control = false;
+}
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == B1_Pin && !control)
+	{
+		HAL_TIM_PWM_Stop_DMA(&htim1, TIM_CHANNEL_1);
+		if (sent)
+		{
+			HAL_TIM_PWM_Start_DMA(&htim1, TIM_CHANNEL_1, (const uint32_t*)CCR1_2, 1);
+		}
+		else
+		{
+			HAL_TIM_PWM_Start_DMA(&htim1, TIM_CHANNEL_1, (const uint32_t*)CCR1_1, 1);
+		}
+		control = true;
+	}
+}
 /* USER CODE END 4 */
 
 /**
