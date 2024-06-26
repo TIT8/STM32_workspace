@@ -437,7 +437,7 @@ int main(void)
   MX_USART2_UART_Init();
  8000580:	f000 f8ac 	bl	80006dc <MX_USART2_UART_Init>
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit_IT(&huart2, (const uint8_t*)tx_buff, sizeof(tx_buff));
+  HAL_UART_Transmit_IT(&huart2, (const uint8_t*)tx_buff, sizeof(tx_buff)); // or strlen(tx_buff) if tx_buff is a "const char pointer"
  8000584:	2231      	movs	r2, #49	@ 0x31
  8000586:	4916      	ldr	r1, [pc, #88]	@ (80005e0 <main+0x70>)
  8000588:	4816      	ldr	r0, [pc, #88]	@ (80005e4 <main+0x74>)
