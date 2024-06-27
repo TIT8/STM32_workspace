@@ -1,0 +1,1 @@
+### Since the FreeRTOS kernel adds an overhead on SRAM, I use the LL driver directly without HAL. Two task: one wasting time to check the button status, the other toogles the LED when the button is pressed. No external interrupt.
